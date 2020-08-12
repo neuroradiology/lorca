@@ -44,8 +44,10 @@ var defaultChromeArgs = []string{
 	"--disable-renderer-backgrounding",
 	"--disable-sync",
 	"--disable-translate",
+	"--disable-windows10-custom-titlebar",
 	"--metrics-recording-only",
 	"--no-first-run",
+	"--no-default-browser-check",
 	"--safebrowsing-disable-auto-update",
 	"--enable-automation",
 	"--password-store=basic",
@@ -94,9 +96,8 @@ func (u *ui) Done() <-chan struct{} {
 }
 
 func (u *ui) Close() error {
-	if err := u.chrome.kill(); err != nil {
-		return err
-	}
+	// ignore err, as the chrome process might be already dead, when user close the window.
+	u.chrome.kill()
 	<-u.done
 	if u.tmpDir != "" {
 		if err := os.RemoveAll(u.tmpDir); err != nil {
@@ -140,7 +141,10 @@ func (u *ui) Bind(name string, f interface{}) error {
 		case 1:
 			// One result may be a value, or an error
 			if res[0].Type().Implements(errorType) {
-				return nil, res[0].Interface().(error)
+				if res[0].Interface() != nil {
+					return nil, res[0].Interface().(error)
+				}
+				return nil, nil
 			}
 			return res[0].Interface(), nil
 		case 2:

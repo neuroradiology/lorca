@@ -14,6 +14,14 @@ var ChromeExecutable = LocateChrome
 // LocateChrome returns a path to the Chrome binary, or an empty string if
 // Chrome installation is not found.
 func LocateChrome() string {
+
+	// If env variable "LORCACHROME" specified and it exists
+	if path, ok := os.LookupEnv("LORCACHROME"); ok {
+		if _, err := os.Stat(path); err == nil {
+			return path
+		}
+	}
+
 	var paths []string
 	switch runtime.GOOS {
 	case "darwin":
@@ -28,9 +36,12 @@ func LocateChrome() string {
 		}
 	case "windows":
 		paths = []string{
-			"C:/Users/" + os.Getenv("USERNAME") + "/AppData/Local/Google/Chrome/Application/chrome.exe",
-			"C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
-			"C:/Program Files/Google/Chrome/Application/chrome.exe",
+			os.Getenv("LocalAppData") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("ProgramFiles") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("ProgramFiles(x86)") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("LocalAppData") + "/Chromium/Application/chrome.exe",
+			os.Getenv("ProgramFiles") + "/Chromium/Application/chrome.exe",
+			os.Getenv("ProgramFiles(x86)") + "/Chromium/Application/chrome.exe",
 		}
 	default:
 		paths = []string{
@@ -38,6 +49,7 @@ func LocateChrome() string {
 			"/usr/bin/google-chrome",
 			"/usr/bin/chromium",
 			"/usr/bin/chromium-browser",
+			"/snap/bin/chromium",
 		}
 	}
 
